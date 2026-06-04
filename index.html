@@ -201,8 +201,8 @@ const { useState, useMemo, useEffect, useRef } = React;
 
 /* ── CHANGE CONFIGURATION HERE ── */
 const SETTINGS_PASSWORD = "between2024";
-const HARDCODED_BIN_ID = "6a211774f5f4af5e29b64b8e";       // Paste your JSONBin Bin ID here
-const HARDCODED_MASTER_KEY = "$2a$10$EXYU48jbVv..SGnQJShEBOqfTAtn8QOBLXNq4Omhh41mNgHQS4XE2"; // Paste your JSONBin Master Key here
+const HARDCODED_BIN_ID = "6a211774f5f4af5e29b64b8e";       
+const HARDCODED_MASTER_KEY = "$2a$10$EXYU48jbVv..SGnQJShEBOqfTAtn8QOBLXNq4Omhh41mNgHQS4XE2"; 
 
 /* ── CONSTANTS ── */
 const PRIORITIES = [
@@ -714,11 +714,12 @@ function App() {
     if(filters.dateTo&&new Date(t.createdAt)>new Date(filters.dateTo+"T23:59:59")) return false;
     return true;
   }),[tasks,filters]);
+  
   const grouped = useMemo(()=>{
     const g={};
     STATUSES.forEach(s=>{ g[s]=filtered.filter(t=>t.status===s).sort((a,b)=>b.priority-a.priority); });
     return g;
-  }),[filtered]);
+  },[filtered]);
 
   const hasFilters = filters.persona!=="all"||filters.priority!=="all"||filters.dateFrom||filters.dateTo;
   const statusTotals = STATUSES.reduce((acc,s)=>{ acc[s]=tasks.filter(t=>t.status===s).length; return acc; },{});
