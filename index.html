@@ -199,8 +199,10 @@ select.form-field { height:38px; padding:0 12px; cursor:pointer; -webkit-appeara
 <script type="text/babel">
 const { useState, useMemo, useEffect, useRef } = React;
 
-/* ── CHANGE PASSWORD HERE ── */
+/* ── CHANGE CONFIGURATION HERE ── */
 const SETTINGS_PASSWORD = "between2024";
+const HARDCODED_BIN_ID = "6a211774f5f4af5e29b64b8e";       // Paste your JSONBin Bin ID here
+const HARDCODED_MASTER_KEY = "$2a$10$EXYU48jbVv..SGnQJShEBOqfTAtn8QOBLXNq4Omhh41mNgHQS4XE2"; // Paste your JSONBin Master Key here
 
 /* ── CONSTANTS ── */
 const PRIORITIES = [
@@ -223,14 +225,14 @@ function daysAgo(n) { return new Date(Date.now()-n*864e5).toISOString(); }
 function isoDate(n) { return new Date(Date.now()+n*864e5).toISOString().slice(0,10); }
 
 const SEED_TASKS = [
-  { id:1, name:"Brand redesign",         description:"Redesign company visual identity including logo, color system and typography guidelines for all materials.",    responsible:"Alice Chen",    priority:5, status:"In Progress",  createdAt:daysAgo(5),  statusChangedAt:daysAgo(2),  dueDate:isoDate(4)  },
-  { id:2, name:"Q3 performance report",  description:"Compile quarterly report with financial metrics, OKR progress and team highlights for the board.",             responsible:"Bob Martin",    priority:4, status:"To-Do",        createdAt:daysAgo(10), statusChangedAt:daysAgo(10), dueDate:isoDate(2)  },
-  { id:3, name:"Client onboarding",      description:"Set up new enterprise client workspace, configure integrations and schedule the kickoff call.",                responsible:"Carlos Rivera", priority:3, status:"In Progress",  createdAt:daysAgo(3),  statusChangedAt:daysAgo(1),  dueDate:isoDate(7)  },
+  { id:1, name:"Brand redesign",         description:"Redesign company visual identity including logo, color system and typography guidelines for all materials.",    responsible:"Alice Chen",    priority:5, status:"In Progress",   createdAt:daysAgo(5),  statusChangedAt:daysAgo(2),  dueDate:isoDate(4)  },
+  { id:2, name:"Q3 performance report",  description:"Compile quarterly report with financial metrics, OKR progress and team highlights for the board.",               responsible:"Bob Martin",    priority:4, status:"To-Do",        createdAt:daysAgo(10), statusChangedAt:daysAgo(10), dueDate:isoDate(2)  },
+  { id:3, name:"Client onboarding",      description:"Set up new enterprise client workspace, configure integrations and schedule the kickoff call.",                 responsible:"Carlos Rivera", priority:3, status:"In Progress",   createdAt:daysAgo(3),  statusChangedAt:daysAgo(1),  dueDate:isoDate(7)  },
   { id:4, name:"API docs update",        description:"Update docs to reflect new endpoints and deprecate legacy references across the developer portal.",             responsible:"Diana Koch",    priority:2, status:"Accomplished", createdAt:daysAgo(18), statusChangedAt:daysAgo(3),  dueDate:null        },
-  { id:5, name:"Q4 team offsite",        description:"Plan Q4 offsite including venue selection, agenda design and all travel logistics.",                           responsible:"Alice Chen",    priority:3, status:"To-Do",        createdAt:daysAgo(7),  statusChangedAt:daysAgo(7),  dueDate:isoDate(14) },
+  { id:5, name:"Q4 team offsite",        description:"Plan Q4 offsite including venue selection, agenda design and all travel logistics.",                            responsible:"Alice Chen",    priority:3, status:"To-Do",        createdAt:daysAgo(7),  statusChangedAt:daysAgo(7),  dueDate:isoDate(14) },
   { id:6, name:"Security audit",         description:"Full security audit of cloud infrastructure and address all critical and high-severity vulnerabilities.",       responsible:"Bob Martin",    priority:5, status:"To-Do",        createdAt:daysAgo(1),  statusChangedAt:daysAgo(0),  dueDate:isoDate(-2) },
   { id:7, name:"Landing page v2",        description:"Redesign marketing landing page with new messaging, social proof sections and improved CTA flow.",              responsible:"Carlos Rivera", priority:4, status:"Accomplished", createdAt:daysAgo(20), statusChangedAt:daysAgo(4),  dueDate:null        },
-  { id:8, name:"Hiring pipeline",        description:"Review Q4 hiring pipeline, post three open roles and establish structured screening criteria.",                responsible:"Diana Koch",    priority:4, status:"To-Do",        createdAt:daysAgo(4),  statusChangedAt:daysAgo(4),  dueDate:isoDate(0)  },
+  { id:8, name:"Hiring pipeline",        description:"Review Q4 hiring pipeline, post three open roles and establish structured screening criteria.",                 responsible:"Diana Koch",    priority:4, status:"To-Do",        createdAt:daysAgo(4),  statusChangedAt:daysAgo(4),  dueDate:isoDate(0)  },
 ];
 let uid = 9;
 
@@ -244,7 +246,7 @@ function daysLeftInfo(s) {
   const n=Math.round((d-t)/864e5);
   if(n<0)  return { text:`${-n}d overdue`, cls:"due-over" };
   if(n===0) return { text:"Due today",      cls:"due-today" };
-  if(n<=3)  return { text:`${n}d left`,     cls:"due-soon" };
+  if(n<=3)  return { text:`${n}d left`,      cls:"due-soon" };
   return     { text:`${n} days left`,       cls:"due-ok" };
 }
 function formatDate(s) { if(!s) return ""; return new Date(s+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"}); }
@@ -283,13 +285,12 @@ function PrioritySelector({ value, onChange }) {
   );
 }
 
-/* ── DUE DATE FIELD (fixed: toggle shows real date input) ── */
+/* ── DUE DATE FIELD ── */
 function DueDateField({ value, onChange }) {
   const [picking, setPicking] = useState(false);
   const inputRef = useRef();
   const info = value ? daysLeftInfo(value) : null;
 
-  // Auto-focus & open picker when switching to pick mode
   useEffect(() => {
     if (picking && inputRef.current) {
       inputRef.current.focus();
@@ -339,8 +340,8 @@ function SettingsPanel({ onClose, onDeleteAllTasks, onDeleteAllPeople, onMoveAll
   const [bulkStatus, setBulkStatus]   = useState("To-Do");
   const [confirmTasks, setConfirmTasks]   = useState(false);
   const [confirmPeople, setConfirmPeople] = useState(false);
-  const [binId,  setBinId]  = useState(() => localStorage.getItem("between_bin_id")  || "");
-  const [binKey, setBinKey] = useState(() => localStorage.getItem("between_bin_key") || "");
+  const [binId,  setBinId]  = useState(() => localStorage.getItem("between_bin_id")  || HARDCODED_BIN_ID);
+  const [binKey, setBinKey] = useState(() => localStorage.getItem("between_bin_key") || HARDCODED_MASTER_KEY);
   const panelRef = useRef();
 
   useEffect(() => {
@@ -642,14 +643,18 @@ function App() {
   const [showCreate, setShowCreate]   = useState(false);
   const [editId, setEditId]           = useState(null);
   const [showSettings, setShowSettings] = useState(false);
-  const [syncState, setSyncState]     = useState("idle"); // idle | syncing | ok | error
+  const [syncState, setSyncState]     = useState("idle"); 
   const syncTimer = useRef(null);
-  const binCfg = () => ({ id: localStorage.getItem("between_bin_id")||"", key: localStorage.getItem("between_bin_key")||"" });
+  
+  const binCfg = () => ({ 
+    id: localStorage.getItem("between_bin_id") || HARDCODED_BIN_ID, 
+    key: localStorage.getItem("between_bin_key") || HARDCODED_MASTER_KEY 
+  });
 
   /* ── JSONBin: load on mount ── */
   useEffect(() => {
     const { id, key } = binCfg();
-    if(!id || !key) return;
+    if(!id || id === "YOUR_BIN_ID_HERE" || !key || key === "YOUR_MASTER_KEY_HERE") return;
     setSyncState("syncing");
     fetch(`https://api.jsonbin.io/v3/b/${id}/latest`, { headers:{"X-Master-Key":key} })
       .then(r=>r.json())
@@ -663,11 +668,11 @@ function App() {
       .catch(()=>setSyncState("error"));
   }, []);
 
-  /* ── JSONBin: debounced auto-save ── */
+  /* ── JSONBin: debounced auto-save (Tasks) ── */
   useEffect(() => {
     try{ localStorage.setItem("between_v3_tasks",JSON.stringify(tasks)); }catch{}
     const { id, key } = binCfg();
-    if(!id || !key) return;
+    if(!id || id === "YOUR_BIN_ID_HERE" || !key || key === "YOUR_MASTER_KEY_HERE") return;
     clearTimeout(syncTimer.current);
     setSyncState("syncing");
     syncTimer.current = setTimeout(() => {
@@ -682,10 +687,11 @@ function App() {
     return ()=>clearTimeout(syncTimer.current);
   }, [tasks]);
 
+  /* ── JSONBin: debounced auto-save (People) ── */
   useEffect(() => {
     try{ localStorage.setItem("between_v3_people",JSON.stringify(people)); }catch{}
     const { id, key } = binCfg();
-    if(!id || !key) return;
+    if(!id || id === "YOUR_BIN_ID_HERE" || !key || key === "YOUR_MASTER_KEY_HERE") return;
     clearTimeout(syncTimer.current);
     setSyncState("syncing");
     syncTimer.current = setTimeout(() => {
@@ -712,14 +718,14 @@ function App() {
     const g={};
     STATUSES.forEach(s=>{ g[s]=filtered.filter(t=>t.status===s).sort((a,b)=>b.priority-a.priority); });
     return g;
-  },[filtered]);
+  }),[filtered]);
 
   const hasFilters = filters.persona!=="all"||filters.priority!=="all"||filters.dateFrom||filters.dateTo;
   const statusTotals = STATUSES.reduce((acc,s)=>{ acc[s]=tasks.filter(t=>t.status===s).length; return acc; },{});
 
   function syncBadge() {
     const { id } = binCfg();
-    if(!id) return null;
+    if(!id || id === "YOUR_BIN_ID_HERE") return null;
     if(syncState==="syncing") return <span className="sync-badge syncing"><span className="spin">↻</span> Syncing…</span>;
     if(syncState==="ok")      return <span className="sync-badge ok"><IconCloud /> Saved</span>;
     if(syncState==="error")   return <span className="sync-badge error"><IconCloud /> Sync error</span>;
