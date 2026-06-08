@@ -195,9 +195,12 @@ select.form-field { height:38px; padding:0 12px; cursor:pointer; -webkit-appeara
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ══════════════════════════════════════════
-   CHANGE PASSWORD HERE ↓
+   EDIT THESE — then re-upload index.html to GitHub
 ══════════════════════════════════════════ */
-const SETTINGS_PASSWORD = "between2024";
+const SETTINGS_PASSWORD = "between2024";  // ← change password here
+const HARDCODED_REPO    = "btwn-experimental/between-tasks";             // ← "btwn-experimental/between-tasks"
+const HARDCODED_TOKEN   = "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";            // ← paste your GitHub token here
+/* ══════════════════════════════════════════ */
 
 /* ── CONSTANTS ── */
 const PRIORITIES = [
@@ -241,8 +244,8 @@ function b64dec(str) { return decodeURIComponent(escape(atob(str.replace(/\s/g,"
 
 function ghCfg() {
   return {
-    repo:  localStorage.getItem("between_gh_repo")  || "",
-    token: localStorage.getItem("between_gh_token") || "",
+    repo:  HARDCODED_REPO  || localStorage.getItem("between_gh_repo")  || "",
+    token: HARDCODED_TOKEN || localStorage.getItem("between_gh_token") || "",
   };
 }
 
