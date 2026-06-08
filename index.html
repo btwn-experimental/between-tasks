@@ -8,6 +8,10 @@
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
@@ -195,12 +199,27 @@ select.form-field { height:38px; padding:0 12px; cursor:pointer; -webkit-appeara
 const { useState, useMemo, useEffect, useRef } = React;
 
 /* ══════════════════════════════════════════
-   EDIT THESE — then re-upload index.html to GitHub
+   PASTE YOUR FIREBASE CONFIGURATION HERE
 ══════════════════════════════════════════ */
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyCbdJaJGzV01pSgFv5O5fn90Hd_aOfZKKo",
+    authDomain: "between-tracker.firebaseapp.com",
+    projectId: "between-tracker",
+    storageBucket: "between-tracker.firebasestorage.app",
+    messagingSenderId: "161588175618",
+    appId: "1:161588175618:web:fcc1b9aff60e978b66981b",
+    measurementId: "G-D4K09GGSFB"
+  };
+
 const SETTINGS_PASSWORD = "between2024";  // ← change password here
-const HARDCODED_REPO    = "btwn-experimental/between-tasks";             // ← "btwn-experimental/between-tasks"
-const HARDCODED_TOKEN   = "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";            // ← paste your GitHub token here
 /* ══════════════════════════════════════════ */
+
+// Initialize Firebase only if the script is imported correctly
+if (typeof firebase !== 'undefined' && FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY") {
+  firebase.initializeApp(FIREBASE_CONFIG);
+}
 
 /* ── CONSTANTS ── */
 const PRIORITIES = [
@@ -218,7 +237,6 @@ const STATUS_STYLE = {
 };
 const AVATAR_PALETTE = ["#4F47B0","#0F6E56","#993C1D","#185FA5","#3B6D11","#854F0B","#993556","#0C447C"];
 const DEFAULT_PEOPLE = ["Alice Chen","Bob Martin","Carlos Rivera","Diana Koch"];
-const GH_FILE = "db.json";
 let uid = 1;
 
 /* ── HELPERS ── */
@@ -238,20 +256,9 @@ function formatDate(s) { if(!s) return ""; return new Date(s+"T00:00:00").toLoca
 function initials(n) { return (n||"?").trim().split(/\s+/).map(c=>c[0]).join("").toUpperCase().slice(0,2); }
 function avatarBg(n) { let h=0; for(const c of(n||"")) h=(h*31+c.charCodeAt(0))|0; return AVATAR_PALETTE[Math.abs(h)%AVATAR_PALETTE.length]; }
 
-// Safe base64 that handles unicode (Cyrillic, etc.)
-function b64enc(str) { return btoa(unescape(encodeURIComponent(str))); }
-function b64dec(str) { return decodeURIComponent(escape(atob(str.replace(/\s/g,"")))); }
-
-function ghCfg() {
-  return {
-    repo:  HARDCODED_REPO  || localStorage.getItem("between_gh_repo")  || "",
-    token: HARDCODED_TOKEN || localStorage.getItem("between_gh_token") || "",
-  };
-}
-
 /* ── ICONS ── */
 const Ic = {
-  Gear:  ()=><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
+  Gear:  ()=><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>,
   Clock: ()=><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
   Cal:   ()=><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
   User:  ()=><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
@@ -261,7 +268,6 @@ const Ic = {
   Flag:  ()=><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>,
   Cloud: ()=><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>,
   Lock:  ()=><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
-  GH:    ()=><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.2 11.38.6.1.82-.26.82-.58v-2.03c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1 .1-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02 0 2.04.13 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22v3.29c0 .32.22.69.83.57C20.57 21.8 24 17.3 24 12c0-6.63-5.37-12-12-12z"/></svg>,
 };
 
 /* ── AVATAR ── */
@@ -325,9 +331,6 @@ function SettingsPanel({ onClose, onDeleteAllTasks, onDeleteAllPeople, onMoveAll
   const [bulkStatus, setBulkStatus] = useState("To-Do");
   const [confirmTasks,  setConfirmTasks]  = useState(false);
   const [confirmPeople, setConfirmPeople] = useState(false);
-  const cfg = ghCfg();
-  const [repo,  setRepo]  = useState(cfg.repo);
-  const [token, setToken] = useState(cfg.token);
   const panelRef = useRef();
 
   useEffect(()=>{
@@ -341,14 +344,6 @@ function SettingsPanel({ onClose, onDeleteAllTasks, onDeleteAllPeople, onMoveAll
     if(pw===SETTINGS_PASSWORD) { setUnlocked(true); setPwErr(false); }
     else { setPwErr(true); setPw(""); }
   }
-
-  function saveCfg() {
-    localStorage.setItem("between_gh_repo",  repo.trim());
-    localStorage.setItem("between_gh_token", token.trim());
-    window.location.reload();
-  }
-
-  const isConnected = !!(cfg.repo && cfg.token);
 
   return (
     <div className="settings-panel" ref={panelRef}>
@@ -373,23 +368,15 @@ function SettingsPanel({ onClose, onDeleteAllTasks, onDeleteAllPeople, onMoveAll
         </div>
       ) : (<>
 
-        {/* GitHub DB config */}
+        {/* Database Status Info */}
         <div className="panel-section">
-          <div className="panel-section-label"><Ic.GH /> GitHub database</div>
-          <div className={`cfg-status${isConnected?" connected":" none"}`}>
-            {isConnected ? `✓ Connected · ${cfg.repo}` : "Not connected"}
+          <div className="panel-section-label"><Ic.Cloud /> Database Sync</div>
+          <div className="cfg-status connected">
+            ✓ Firebase Cloud Connected
           </div>
-          <div style={{marginTop:10}}>
-            <input className="cfg-input" placeholder="Repo  (username/repo-name)"
-              value={repo} onChange={e=>setRepo(e.target.value)} />
-            <input className="cfg-input" type="password" placeholder="Token  (github_pat_…)"
-              value={token} onChange={e=>setToken(e.target.value)} />
+          <div className="cfg-hint" style={{marginTop: 8}}>
+            Your application is automatically saving to global cloud memory. Changes made by your team sync instantly.
           </div>
-          <div className="cfg-hint">
-            Create a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank">fine-grained token</a> with <strong>Contents: Read &amp; Write</strong>.<br/>
-            Make sure <code>db.json</code> exists in your repo (the app creates it automatically if missing).
-          </div>
-          <button className="btn-save-cfg" onClick={saveCfg}>Save &amp; reload</button>
         </div>
 
         {/* Bulk move */}
@@ -620,29 +607,10 @@ function EditModal({ task, people, setPeople, onClose, onSave, onDelete }) {
   );
 }
 
-/* ══════════════════════════════════════════
-   APP
-══════════════════════════════════════════ */
+/* ── APP ── */
 function App() {
-  /* localStorage – check all old keys so upgrades never lose data */
-  const [tasks, setTasks] = useState(()=>{
-    try {
-      const raw = localStorage.getItem("between_v3_tasks")
-               || localStorage.getItem("between_v2_tasks")
-               || localStorage.getItem("between_v1_tasks");
-      if(raw) { const p=JSON.parse(raw); localStorage.setItem("between_v3_tasks",raw); return p; }
-    } catch {}
-    return [];
-  });
-  const [people, setPeople] = useState(()=>{
-    try {
-      const raw = localStorage.getItem("between_v3_people")
-               || localStorage.getItem("between_v2_people")
-               || localStorage.getItem("between_v1_people");
-      if(raw) { const p=JSON.parse(raw); localStorage.setItem("between_v3_people",raw); return p; }
-    } catch {}
-    return DEFAULT_PEOPLE;
-  });
+  const [tasks, setTasks] = useState([]);
+  const [people, setPeople] = useState(DEFAULT_PEOPLE);
 
   const [filters, setFilters]           = useState({ persona:"all", priority:"all", dateFrom:"", dateTo:"" });
   const [showCreate, setShowCreate]     = useState(false);
@@ -651,80 +619,63 @@ function App() {
   const [syncState, setSyncState]       = useState("idle");
 
   const syncTimer = useRef(null);
-  const syncReady = useRef(false);  // true only after GitHub load completes
-  const ghSha     = useRef("");     // current db.json SHA (required by GitHub API for updates)
+  const syncReady = useRef(false);
 
-  /* ── GitHub: load on mount ── */
+  /* ── Firebase Live Loader ── */
   useEffect(()=>{
-    const { repo, token } = ghCfg();
-    if(!repo || !token) { syncReady.current=true; return; }
+    if (typeof firebase === 'undefined' || FIREBASE_CONFIG.apiKey === "YOUR_API_KEY") {
+      setSyncState("error");
+      syncReady.current = true;
+      return;
+    }
+
     setSyncState("syncing");
-    fetch(`https://api.github.com/repos/${repo}/contents/${GH_FILE}`, {
-      headers:{ "Authorization":`token ${token}`, "Accept":"application/vnd.github.v3+json" }
-    })
-    .then(r=>r.json())
-    .then(data=>{
-      if(data.content) {
-        /* File exists – parse and load */
-        const parsed = JSON.parse(b64dec(data.content));
-        ghSha.current = data.sha;
-        if(Array.isArray(parsed.tasks))  { setTasks(parsed.tasks);  uid=Math.max(uid,...parsed.tasks.map(t=>t.id+1)); }
-        if(Array.isArray(parsed.people)) setPeople(parsed.people);
-        setSyncState("ok");
-      } else if(data.message === "Not Found" || data.status === "404") {
-        /* File doesn't exist yet – create it */
-        pushToGitHub({ tasks:[], people:DEFAULT_PEOPLE }, "", repo, token)
-          .then(sha=>{ ghSha.current=sha; setSyncState("ok"); })
-          .catch(()=>setSyncState("error"));
+    const dbRef = firebase.database().ref("boardData");
+
+    // Pull from cloud
+    dbRef.once("value")
+    .then((snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        if (Array.isArray(data.tasks)) {
+          setTasks(data.tasks);
+          uid = Math.max(1, ...data.tasks.map(t => t.id + 1));
+        }
+        if (Array.isArray(data.people)) setPeople(data.people);
       } else {
-        setSyncState("error");
+        // Init empty db structure
+        dbRef.set({ tasks: [], people: DEFAULT_PEOPLE });
       }
+      setSyncState("ok");
       syncReady.current = true;
     })
-    .catch(()=>{ setSyncState("error"); syncReady.current=true; });
+    .catch(() => {
+      setSyncState("error");
+      syncReady.current = true;
+    });
   },[]);
 
-  /* ── GitHub: push helper ── */
-  function pushToGitHub(data, sha, repo, token) {
-    const body = JSON.stringify(data, null, 2);
-    const payload = { message:"Update tasks", content:b64enc(body) };
-    if(sha) payload.sha = sha;
-    return fetch(`https://api.github.com/repos/${repo}/contents/${GH_FILE}`, {
-      method:"PUT",
-      headers:{ "Authorization":`token ${token}`, "Accept":"application/vnd.github.v3+json", "Content-Type":"application/json" },
-      body: JSON.stringify(payload)
-    })
-    .then(r=>r.json())
-    .then(d=>{ if(d.content&&d.content.sha) return d.content.sha; throw new Error(JSON.stringify(d)); });
-  }
-
-  /* ── GitHub: debounced auto-save (only after syncReady) ── */
+  /* ── Firebase: Save engine ── */
   function scheduleSave(latestTasks, latestPeople) {
-    const { repo, token } = ghCfg();
-    if(!repo || !token) return;
+    if (typeof firebase === 'undefined' || !syncReady.current) return;
+    
     clearTimeout(syncTimer.current);
     setSyncState("syncing");
-    syncTimer.current = setTimeout(()=>{
-      pushToGitHub({ tasks:latestTasks, people:latestPeople }, ghSha.current, repo, token)
-        .then(sha=>{ ghSha.current=sha; setSyncState("ok"); })
-        .catch(()=>setSyncState("error"));
-    }, 1500);
+
+    syncTimer.current = setTimeout(() => {
+      firebase.database().ref("boardData").set({
+        tasks: latestTasks,
+        people: latestPeople
+      })
+      .then(() => setSyncState("ok"))
+      .catch(() => setSyncState("error"));
+    }, 1200); // 1.2 second debounce
   }
 
-  /* ── Persist to localStorage + trigger cloud save ── */
-  useEffect(()=>{
-    try{ localStorage.setItem("between_v3_tasks",JSON.stringify(tasks)); }catch{}
-    if(!syncReady.current) return;   // 🔒 never overwrite cloud before loading from it
+  /* ── Track State Mutatations ── */
+  useEffect(() => {
     scheduleSave(tasks, people);
-    return ()=>clearTimeout(syncTimer.current);
-  },[tasks]);
-
-  useEffect(()=>{
-    try{ localStorage.setItem("between_v3_people",JSON.stringify(people)); }catch{}
-    if(!syncReady.current) return;
-    scheduleSave(tasks, people);
-    return ()=>clearTimeout(syncTimer.current);
-  },[people]);
+  }, [tasks, people]);
 
   /* ── Derived state ── */
   const editTask = tasks.find(t=>t.id===editId)||null;
@@ -743,13 +694,11 @@ function App() {
 
   const hasFilters = filters.persona!=="all"||filters.priority!=="all"||filters.dateFrom||filters.dateTo;
   const statusTotals = STATUSES.reduce((acc,s)=>{ acc[s]=tasks.filter(t=>t.status===s).length; return acc; },{});
-  const isConnected  = !!(ghCfg().repo && ghCfg().token);
 
   function SyncBadge() {
-    if(!isConnected) return null;
     if(syncState==="syncing") return <span className="sync-badge syncing"><span className="spin">↻</span> Syncing…</span>;
-    if(syncState==="ok")      return <span className="sync-badge ok"><Ic.Cloud/> Saved</span>;
-    if(syncState==="error")   return <span className="sync-badge error" title="Click to retry" onClick={()=>window.location.reload()}><Ic.Cloud/> Error – click to retry</span>;
+    if(syncState==="ok")      return <span className="sync-badge ok"><Ic.Cloud/> Live</span>;
+    if(syncState==="error")   return <span className="sync-badge error" title="Configuration incomplete" onClick={()=>window.location.reload()}><Ic.Cloud/> Error Connecting</span>;
     return null;
   }
 
