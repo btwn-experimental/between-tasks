@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Between — Task Management</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7.26.2/babel.min.js"></script>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,6 +26,142 @@
 }
 body { font-family:'Outfit',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; -webkit-font-smoothing:antialiased; }
 ::-webkit-scrollbar{width:5px;height:5px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:var(--border3);border-radius:3px}
+/* MOBILE & TABLET ADAPTATIONS */
+/* ── RESPONSIVE DESIGN FOR MOBILE & TABLETS ── */
+
+@media (max-width: 768px) {
+  /* Prevent any accidental horizontal scrolling across the whole page */
+  html, body {
+    overflow-x: hidden;
+  }
+
+  /* 1. COMPACT HEADER FOR MOBILE */
+  .header {
+    padding: 0 1rem; /* Reduce side padding */
+    height: 54px;   /* Slightly shorter header */
+  }
+
+  /* HIDE the bulky status chips on mobile so the "New task" button has room */
+  .header-stats {
+    display: none !important; 
+  }
+
+  .header-left {
+    gap: 8px; /* Tighten gaps between brand and sync badge */
+  }
+
+  .brand {
+    font-size: 18px; /* Scale down the logo slightly */
+  }
+
+  /* 2. COMPACT FILTERS HORIZONTAL SCROLL */
+  .filters {
+    padding: 0.6rem 1rem;
+    display: flex;
+    flex-wrap: nowrap; /* Keep them in one line */
+    overflow-x: auto;  /* Allow sliding the filters if they don't fit */
+    -webkit-overflow-scrolling: touch;
+    gap: 6px;
+  }
+  
+  .filters::-webkit-scrollbar {
+    display: none; /* Keep filter bar visually clean */
+  }
+
+  .filter-count {
+    margin-left: auto;
+    padding-left: 10px;
+  }
+
+  /* 3. CENTERED SETTINGS PANEL */
+  .settings-panel {
+    position: fixed;
+    top: 60px;
+    right: 16px;
+    left: 16px;
+    width: auto;
+    max-width: calc(100% - 32px);
+  }
+}
+
+@media (max-width: 400px) {
+  /* For extra narrow phones: shorten the button text to save absolute space */
+  .btn-new span {
+    display: none; /* If you wrap the text inside a span, we can hide it */
+  }
+  
+  /* Alternative fix: make button padding tighter on tiny screens */
+  .btn-new {
+    padding: 0 10px;
+    font-size: 12px;
+  }
+}
+/* ── GRANULAR MANAGEMENT PANEL UI ── */
+.manage-list { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 6px; 
+  max-height: 180px; 
+  overflow-y: auto; 
+  margin-bottom: 12px; 
+  margin-top: 8px;
+  padding-right: 4px; 
+}
+.manage-item { 
+  display: flex; 
+  align-items: center; 
+  gap: 6px; 
+}
+.manage-input { 
+  flex: 1; 
+  height: 28px; 
+  padding: 0 8px; 
+  font-size: 12.5px; 
+  font-family: 'Outfit', sans-serif; 
+  border: 0.5px solid var(--border2); 
+  border-radius: 6px; 
+  background: var(--surface); 
+  color: var(--text); 
+  outline: none; 
+}
+.manage-input:focus { 
+  border-color: var(--purple); 
+}
+.btn-inline-del { 
+  width: 28px; 
+  height: 28px; 
+  border-radius: 6px; 
+  border: none; 
+  background: transparent; 
+  color: var(--text3); 
+  cursor: pointer; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  transition: all 0.15s; 
+}
+.btn-inline-del:hover { 
+  background: #FAECE7; 
+  color: #D85A30; 
+}
+.panel-back-btn { 
+  display: inline-flex; 
+  align-items: center; 
+  gap: 4px; 
+  background: transparent; 
+  border: none; 
+  font-size: 11px; 
+  color: var(--purple); 
+  cursor: pointer; 
+  font-weight: 700; 
+  margin-bottom: 8px; 
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: 'Outfit', sans-serif; 
+}
+.panel-back-btn:hover {
+  color: var(--purple-dark);
+}
 
 /* HEADER */
 .header { background:var(--surface); border-bottom:0.5px solid var(--border2); padding:0 2rem; height:58px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:200; }
@@ -75,6 +211,11 @@ body { font-family:'Outfit',sans-serif; background:var(--bg); color:var(--text);
 .cfg-hint a { color:var(--purple); text-decoration:none; }
 .cfg-hint a:hover { text-decoration:underline; }
 .cfg-hint code { font-size:10px; background:var(--surface2); padding:1px 4px; border-radius:3px; font-family:monospace; }
+.json-btn-row { display:flex; gap:7px; margin-top:0; }
+.btn-json { flex:1; height:33px; padding:0 10px; font-size:12px; font-weight:500; font-family:'Outfit',sans-serif; cursor:pointer; border-radius:7px; border:0.5px solid var(--border2); background:transparent; color:var(--text2); display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.15s; }
+.btn-json:hover { background:var(--surface2); color:var(--text); border-color:var(--border3); }
+.btn-json.primary { background:var(--purple-light); color:var(--purple); border-color:var(--purple-mid); }
+.btn-json.primary:hover { background:var(--purple); color:white; }
 .btn-save-cfg { height:30px; padding:0 12px; font-size:12px; font-weight:500; font-family:'Outfit',sans-serif; cursor:pointer; border-radius:6px; border:none; background:var(--purple); color:white; margin-top:10px; transition:background 0.15s; }
 .btn-save-cfg:hover { background:var(--purple-dark); }
 .cfg-status { font-size:11px; margin-top:7px; padding:6px 9px; border-radius:6px; }
@@ -109,7 +250,16 @@ body { font-family:'Outfit',sans-serif; background:var(--bg); color:var(--text);
 .filter-count { margin-left:auto; font-size:12px; color:var(--text3); white-space:nowrap; }
 
 /* BOARD */
-.board { display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem; padding:1.5rem 2rem 3rem; align-items:start; }
+/* .board { display:grid; grid-template-columns:repeat(3,1fr); gap:1.25rem; padding:1.5rem 2rem 3rem; align-items:start; } */
+/* Locate the existing .board class and update it: */
+.board { 
+  display: grid; 
+  /* Auto-fits columns; wraps down dynamically if space is less than 320px */
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+  gap: 1.25rem; 
+  padding: 1rem 1rem 3rem; /* Slightly tighter padding for smaller displays */
+  align-items: start; 
+}
 .column { display:flex; flex-direction:column; }
 .col-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 .col-name { font-family:'Syne',sans-serif; font-weight:700; font-size:11.5px; text-transform:uppercase; letter-spacing:1px; color:var(--text2); }
@@ -135,6 +285,7 @@ body { font-family:'Outfit',sans-serif; background:var(--bg); color:var(--text);
 
 /* DUE PILLS */
 .due-pill { font-size:11px; font-weight:600; padding:2px 8px; border-radius:5px; display:inline-flex; align-items:center; gap:4px; }
+.due-frozen-note { font-size:11.5px; color:var(--text3); margin-top:6px; }
 .due-ok    { background:#EAF3DE; color:#27500A; }
 .due-soon  { background:#FAEEDA; color:#633806; }
 .due-today { background:#FAEEDA; color:#993C1D; }
@@ -198,28 +349,34 @@ select.form-field { height:38px; padding:0 12px; cursor:pointer; -webkit-appeara
 <script type="text/babel">
 const { useState, useMemo, useEffect, useRef } = React;
 
-/* ══════════════════════════════════════════
-   PASTE YOUR FIREBASE CONFIGURATION HERE
-══════════════════════════════════════════ */
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyCbdJaJGzV01pSgFv5O5fn90Hd_aOfZKKo",
-    authDomain: "between-tracker.firebaseapp.com",
-    projectId: "between-tracker",
-    storageBucket: "between-tracker.firebasestorage.app",
-    messagingSenderId: "161588175618",
-    appId: "1:161588175618:web:fcc1b9aff60e978b66981b",
-    measurementId: "G-D4K09GGSFB"
-  };
+/* ── FIREBASE CONFIG ── */
+// TODO: Replace these values with your own from Firebase Console →
+//   Project Settings → Your apps → SDK setup and configuration
+// const firebaseConfig = {
+//   apiKey:            "AIzaSyDj-4GZno8Jw2afoeWr6P1fTpFg_Z5JVI0",
+//   authDomain:        "taskmanagerr-fb52e.firebaseapp.com",
+//   databaseURL:       "https://taskmanagerr-fb52e-default-rtdb.europe-west1.firebasedatabase.app",
+//   projectId:         "taskmanagerr-fb52e",
+//   storageBucket:     "taskmanagerr-fb52e.firebasestorage.app",
+//   messagingSenderId: "862096943564",
+//   appId:             "1:862096943564:web:7f5f3bb64c2434bcfb9569",
+//   measurementId:     "G-FJJTBQEKWH",
+// };
+const firebaseConfig = {
+  apiKey: "AIzaSyCbdJaJGzV01pSgFv5O5fn90Hd_aOfZKKo",
+  authDomain: "between-tracker.firebaseapp.com",
+  databaseURL:"https://between-tracker-default-rtdb.firebaseio.com"  ,
+  projectId: "between-tracker",
+  storageBucket: "between-tracker.firebasestorage.app",
+  messagingSenderId: "161588175618",
+  appId: "1:161588175618:web:fcc1b9aff60e978b66981b",
+  measurementId: "G-D4K09GGSFB"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-const SETTINGS_PASSWORD = "between2024";  // ← change password here
-/* ══════════════════════════════════════════ */
-
-// Initialize Firebase only if the script is imported correctly
-if (typeof firebase !== 'undefined' && FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY") {
-  firebase.initializeApp(FIREBASE_CONFIG);
-}
+/* ── CONFIG ── */
+const SETTINGS_PASSWORD = "between2024"; // Change this to your desired password
 
 /* ── CONSTANTS ── */
 const PRIORITIES = [
@@ -253,6 +410,23 @@ function daysLeftInfo(s) {
   return     { text:`${n} days left`,      cls:"due-ok" };
 }
 function formatDate(s) { if(!s) return ""; return new Date(s+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"}); }
+function completionInfo(task) {
+  if(!task.createdAt || !task.statusChangedAt) return null;
+  const start = new Date(task.createdAt); start.setHours(0,0,0,0);
+  const end = new Date(task.statusChangedAt); end.setHours(0,0,0,0);
+  const duration = Math.max(0, Math.round((end-start)/864e5));
+  const durLabel = duration===1 ? "1 day" : `${duration} days`;
+  if(task.dueDate) {
+    const due = new Date(task.dueDate+"T00:00:00"); due.setHours(0,0,0,0);
+    const lateBy = Math.round((end-due)/864e5);
+    if(lateBy>0) {
+      const lateLabel = lateBy===1 ? "1 day late" : `${lateBy} days late`;
+      return { text:`Completed in ${durLabel}, ${lateLabel}`, cls:"due-over" };
+    }
+    return { text:`Completed in ${durLabel}`, cls:"due-ok" };
+  }
+  return { text:`Completed in ${durLabel}`, cls:"due-ok" };
+}
 function initials(n) { return (n||"?").trim().split(/\s+/).map(c=>c[0]).join("").toUpperCase().slice(0,2); }
 function avatarBg(n) { let h=0; for(const c of(n||"")) h=(h*31+c.charCodeAt(0))|0; return AVATAR_PALETTE[Math.abs(h)%AVATAR_PALETTE.length]; }
 
@@ -268,6 +442,8 @@ const Ic = {
   Flag:  ()=><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>,
   Cloud: ()=><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>,
   Lock:  ()=><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
+  Download: ()=><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>,
+  Upload:   ()=><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>,
 };
 
 /* ── AVATAR ── */
@@ -291,10 +467,10 @@ function PrioritySelector({ value, onChange }) {
 }
 
 /* ── DUE DATE FIELD ── */
-function DueDateField({ value, onChange }) {
+function DueDateField({ value, onChange, hideCountdown }) {
   const [picking, setPicking] = useState(false);
   const inputRef = useRef();
-  const info = value ? daysLeftInfo(value) : null;
+  const info = (value && !hideCountdown) ? daysLeftInfo(value) : null;
 
   useEffect(()=>{
     if(picking && inputRef.current) {
@@ -324,13 +500,14 @@ function DueDateField({ value, onChange }) {
 }
 
 /* ── SETTINGS PANEL ── */
-function SettingsPanel({ onClose, onDeleteAllTasks, onDeleteAllPeople, onMoveAllTasks }) {
+/* ── UPDATED SETTINGS PANEL WITH PORTAL MANAGEMENT ── */
+function SettingsPanel({ onClose, tasks, setTasks, people, setPeople, onMoveAllTasks, onExportJSON, onImportJSON }) {
   const [unlocked, setUnlocked]   = useState(false);
   const [pw, setPw]               = useState("");
   const [pwErr, setPwErr]         = useState(false);
   const [bulkStatus, setBulkStatus] = useState("To-Do");
-  const [confirmTasks,  setConfirmTasks]  = useState(false);
-  const [confirmPeople, setConfirmPeople] = useState(false);
+  const [currentView, setCurrentView] = useState("main"); // Views: "main", "people", "tasks"
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const panelRef = useRef();
 
   useEffect(()=>{
@@ -368,48 +545,121 @@ function SettingsPanel({ onClose, onDeleteAllTasks, onDeleteAllPeople, onMoveAll
         </div>
       ) : (<>
 
-        {/* Database Status Info */}
-        <div className="panel-section">
-          <div className="panel-section-label"><Ic.Cloud /> Database Sync</div>
-          <div className="cfg-status connected">
-            ✓ Firebase Cloud Connected
-          </div>
-          <div className="cfg-hint" style={{marginTop: 8}}>
-            Your application is automatically saving to global cloud memory. Changes made by your team sync instantly.
-          </div>
-        </div>
-
-        {/* Bulk move */}
-        <div className="panel-section">
-          <div className="panel-section-label">Bulk move all tasks</div>
-          <div className="bulk-row">
-            <select className="bulk-select" value={bulkStatus} onChange={e=>setBulkStatus(e.target.value)}>
-              {STATUSES.map(s=><option key={s} value={s}>{s}</option>)}
-            </select>
-            <button className="btn-apply" onClick={()=>{onMoveAllTasks(bulkStatus);onClose();}}>Move all</button>
-          </div>
-        </div>
-
-        {/* Danger zone */}
-        <div className="panel-section">
-          <div className="panel-section-label">Danger zone</div>
-          {!confirmTasks
-            ? <button className="panel-danger-btn" onClick={()=>setConfirmTasks(true)}><Ic.Trash /> Delete all tasks</button>
-            : <div className="panel-confirm-row">
-                <span className="panel-confirm-label">Delete all tasks?</span>
-                <button className="btn-yes" onClick={()=>{onDeleteAllTasks();onClose();}}>Yes</button>
-                <button className="btn-no" onClick={()=>setConfirmTasks(false)}>No</button>
+        {/* VIEW 1: MAIN PANEL VIEW */}
+        {currentView === "main" && (
+          <>
+            {/* JSON Export / Import */}
+            <div className="panel-section">
+              <div className="panel-section-label"><Ic.Download /> Data File (JSON)</div>
+              <div className="json-btn-row">
+                <button className="btn-json primary" onClick={()=>{onExportJSON();onClose();}}>
+                  <Ic.Download /> Save to JSON
+                </button>
+                <label className="btn-json" style={{cursor:"pointer"}}>
+                  <Ic.Upload /> Load from JSON
+                  <input type="file" accept=".json" style={{display:"none"}}
+                    onChange={e=>{ const f=e.target.files[0]; if(f){onImportJSON(f);onClose();} e.target.value=""; }}/>
+                </label>
               </div>
-          }
-          {!confirmPeople
-            ? <button className="panel-danger-btn" onClick={()=>setConfirmPeople(true)}><Ic.Trash /> Delete all people</button>
-            : <div className="panel-confirm-row">
-                <span className="panel-confirm-label">Delete all people?</span>
-                <button className="btn-yes" onClick={()=>{onDeleteAllPeople();onClose();}}>Yes</button>
-                <button className="btn-no" onClick={()=>setConfirmPeople(false)}>No</button>
+            </div>
+
+            {/* Bulk move */}
+            <div className="panel-section">
+              <div className="panel-section-label">Bulk move all tasks</div>
+              <div className="bulk-row">
+                <select className="bulk-select" value={bulkStatus} onChange={e=>setBulkStatus(e.target.value)}>
+                  {STATUSES.map(s=><option key={s} value={s}>{s}</option>)}
+                </select>
+                <button className="btn-apply" onClick={()=>{onMoveAllTasks(bulkStatus);onClose();}}>Move all</button>
               </div>
-          }
-        </div>
+            </div>
+
+            {/* New Interactive Management Section */}
+            <div className="panel-section">
+              <div className="panel-section-label">Workspace Control</div>
+              <button className="btn-json" style={{width:"100%", marginBottom:"8px", justifyContent:"flex-start", paddingLeft:"12px"}} onClick={()=>setCurrentView("tasks")}>
+                💼 Manage Tasks ({tasks.length})
+              </button>
+              <button className="btn-json" style={{width:"100%", justifyContent:"flex-start", paddingLeft:"12px"}} onClick={()=>setCurrentView("people")}>
+                👥 Manage People ({people.length})
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* VIEW 2: MANAGE PEOPLE */}
+        {currentView === "people" && (
+          <div className="panel-section">
+            <button className="panel-back-btn" onClick={()=>{setCurrentView("main"); setConfirmDeleteAll(false);}}>← Back</button>
+            <div className="panel-section-label">Manage Team Members</div>
+            <div className="manage-list">
+              {people.map((person, index) => (
+                <div key={index} className="manage-item">
+                  <input className="manage-input" value={person} 
+                    onChange={e => {
+                      const newName = e.target.value;
+                      setPeople(prev => prev.map((p, i) => i === index ? newName : p));
+                      setTasks(prev => prev.map(t => t.responsible === person ? { ...t, responsible: newName } : t));
+                    }} 
+                  />
+                  <button className="btn-inline-del" title="Remove" onClick={() => {
+                    setPeople(prev => prev.filter((_, i) => i !== index));
+                    setTasks(prev => prev.map(t => t.responsible === person ? { ...t, responsible: "Unassigned" } : t));
+                  }}>
+                    <Ic.X />
+                  </button>
+                </div>
+              ))}
+              {people.length === 0 && <div style={{fontSize:12, color:"var(--text3)", textAlign:"center", padding:"12px 0"}}>No people found</div>}
+            </div>
+            
+            {people.length > 0 && (!confirmDeleteAll ? (
+              <button className="panel-danger-btn" onClick={()=>setConfirmDeleteAll(true)}><Ic.Trash /> WIPE ALL PEOPLE</button>
+            ) : (
+              <div className="panel-confirm-row">
+                <span className="panel-confirm-label">Confirm absolute wipe?</span>
+                <button className="btn-yes" onClick={() => { setPeople([]); setTasks(prev => prev.map(t => ({...t, responsible: "Unassigned"}))); setConfirmDeleteAll(false); }}>Yes</button>
+                <button className="btn-no" onClick={()=>setConfirmDeleteAll(false)}>No</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* VIEW 3: MANAGE TASKS */}
+        {currentView === "tasks" && (
+          <div className="panel-section">
+            <button className="panel-back-btn" onClick={()=>{setCurrentView("main"); setConfirmDeleteAll(false);}}>← Back</button>
+            <div className="panel-section-label">Manage All Tasks</div>
+            <div className="manage-list">
+              {tasks.map((task) => (
+                <div key={task.id} className="manage-item">
+                  <input className="manage-input" value={task.name} 
+                    onChange={e => {
+                      const newName = e.target.value;
+                      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, name: newName } : t));
+                    }} 
+                  />
+                  <button className="btn-inline-del" title="Delete Task" onClick={() => {
+                    setTasks(prev => prev.filter(t => t.id !== task.id));
+                  }}>
+                    <Ic.X />
+                  </button>
+                </div>
+              ))}
+              {tasks.length === 0 && <div style={{fontSize:12, color:"var(--text3)", textAlign:"center", padding:"12px 0"}}>No tasks found</div>}
+            </div>
+            
+            {tasks.length > 0 && (!confirmDeleteAll ? (
+              <button className="panel-danger-btn" onClick={()=>setConfirmDeleteAll(true)}><Ic.Trash /> WIPE ALL TASKS</button>
+            ) : (
+              <div className="panel-confirm-row">
+                <span className="panel-confirm-label">Confirm absolute wipe?</span>
+                <button className="btn-yes" onClick={() => { setTasks([]); setConfirmDeleteAll(false); }}>Yes</button>
+                <button className="btn-no" onClick={()=>setConfirmDeleteAll(false)}>No</button>
+              </div>
+            ))}
+          </div>
+        )}
       </>)}
     </div>
   );
@@ -418,7 +668,9 @@ function SettingsPanel({ onClose, onDeleteAllTasks, onDeleteAllPeople, onMoveAll
 /* ── TASK CARD ── */
 function TaskCard({ task, onClick }) {
   const pr  = getPriority(task.priority);
-  const due = task.dueDate ? daysLeftInfo(task.dueDate) : null;
+  const isDone = task.status === "Accomplished";
+  const due = (task.dueDate && !isDone) ? daysLeftInfo(task.dueDate) : null;
+  const completion = isDone ? completionInfo(task) : null;
   return (
     <div className="task-card" onClick={onClick}>
       <div className="card-stripe" style={{background:pr.color}}/>
@@ -427,6 +679,13 @@ function TaskCard({ task, onClick }) {
         <span className="card-badge" style={{background:pr.bg,color:pr.text}}>P{task.priority} {pr.label}</span>
       </div>
       {due && <div className="card-due-row"><span className={`due-pill ${due.cls}`}><Ic.Cal/> {due.text}</span></div>}
+      {completion && (
+        <div className="card-due-row">
+          <span className={`due-pill ${completion.cls}`}>
+            <Ic.Cal/> {completion.text}
+          </span>
+        </div>
+      )}
       <div className="card-row2">
         <div className="card-time"><Ic.Clock/> {daysSince(task.statusChangedAt)}</div>
         <div className="card-person">
@@ -439,8 +698,8 @@ function TaskCard({ task, onClick }) {
 }
 
 /* ── CREATE MODAL ── */
-function CreateModal({ people, setPeople, onClose, onCreate }) {
-  const [form, setForm]           = useState({ name:"", description:"", responsible:people[0]||"", priority:3, dueDate:null });
+function CreateModal({ people, setPeople, onClose, onCreate, defaultResponsible }) {
+  const [form, setForm]           = useState({ name:"", description:"", responsible:defaultResponsible||people[0]||"", priority:3, dueDate:null, status:"To-Do" });
   const [newPerson, setNewPerson] = useState("");
   const inputRef = useRef();
   useEffect(()=>{ inputRef.current?.focus(); },[]);
@@ -454,7 +713,7 @@ function CreateModal({ people, setPeople, onClose, onCreate }) {
     if(!form.name.trim()){ inputRef.current?.focus(); return; }
     onCreate({ id:uid++, ...form, name:form.name.trim(), description:form.description.trim(),
       responsible:form.responsible||people[0]||"Unassigned",
-      status:"To-Do", createdAt:new Date().toISOString(), statusChangedAt:new Date().toISOString() });
+      status:form.status||"To-Do", createdAt:new Date().toISOString(), statusChangedAt:new Date().toISOString() });
     onClose();
   }
   const nowLabel = new Date().toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
@@ -488,7 +747,6 @@ function CreateModal({ people, setPeople, onClose, onCreate }) {
               onChange={e=>setNewPerson(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addPerson()}/>
             <button onClick={addPerson} type="button">+ Add person</button>
           </div>
-        </div>
         <div className="form-group">
           <label className="form-label">Priority</label>
           <PrioritySelector value={form.priority} onChange={v=>setForm(f=>({...f,priority:v}))}/>
@@ -497,9 +755,14 @@ function CreateModal({ people, setPeople, onClose, onCreate }) {
           <label className="form-label">Due date</label>
           <DueDateField value={form.dueDate} onChange={v=>setForm(f=>({...f,dueDate:v}))}/>
         </div>
+        <div className="form-group">
+          <label className="form-label">Status</label>
+          <select className="form-field" value={form.status} onChange={e=>setForm(f=>({...f,status:e.target.value}))}>
+            {STATUSES.map(s=><option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
         <div className="auto-row">
           <span className="auto-item"><Ic.Cal/> Created: <strong>{nowLabel}</strong></span>
-          <span className="auto-item"><Ic.Flag/> Status: <strong>To-Do</strong> (auto)</span>
         </div>
         <div className="modal-foot">
           <div className="foot-left"/>
@@ -507,7 +770,9 @@ function CreateModal({ people, setPeople, onClose, onCreate }) {
           <button className="btn-primary" onClick={submit}>Create task</button>
         </div>
       </div>
+      </div>
     </div>
+    
   );
 }
 
@@ -580,7 +845,12 @@ function EditModal({ task, people, setPeople, onClose, onSave, onDelete }) {
         </div>
         <div className="form-group">
           <label className="form-label">Due date</label>
-          <DueDateField value={form.dueDate} onChange={v=>setForm(f=>({...f,dueDate:v}))}/>
+          <DueDateField value={form.dueDate} onChange={v=>setForm(f=>({...f,dueDate:v}))} hideCountdown={form.status==="Accomplished"}/>
+          {form.status==="Accomplished" && form.dueDate && (()=>{ const c=completionInfo(task); return (
+            <div className={`due-frozen-note ${c?c.cls:""}`}>
+              {c ? c.text : "Deadline tracking stopped"} — task is marked Accomplished.
+            </div>
+          ); })()}
         </div>
         <div className="form-group">
           <label className="form-label">Progress</label>
@@ -604,6 +874,7 @@ function EditModal({ task, people, setPeople, onClose, onSave, onDelete }) {
         </div>
       </div>
     </div>
+    // the  bug edited
   );
 }
 
@@ -618,64 +889,86 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [syncState, setSyncState]       = useState("idle");
 
-  const syncTimer = useRef(null);
-  const syncReady = useRef(false);
+  const syncTimer   = useRef(null);
+  const isFirstLoad = useRef(true);
+  const fbReady     = useRef(false);
 
-  /* ── Firebase Live Loader ── */
-  useEffect(()=>{
-    if (typeof firebase === 'undefined' || FIREBASE_CONFIG.apiKey === "YOUR_API_KEY") {
+  /* ── Firebase: load once on mount, then listen for remote changes ── */
+  useEffect(() => {
+    // Guard: if config was not filled in, fall back to localStorage silently
+    if (!firebaseConfig.databaseURL || firebaseConfig.databaseURL.includes("YOUR_PROJECT")) {
       setSyncState("error");
-      syncReady.current = true;
+      try {
+        const raw = localStorage.getItem("between_boardData");
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (Array.isArray(data.tasks))  { setTasks(data.tasks); uid = Math.max(1, ...data.tasks.map(t=>t.id+1)); }
+          if (Array.isArray(data.people)) setPeople(data.people);
+        }
+      } catch {}
+      isFirstLoad.current = false;
       return;
     }
 
     setSyncState("syncing");
-    const dbRef = firebase.database().ref("boardData");
+    const ref = db.ref("boardData");
 
-    // Pull from cloud
-    dbRef.once("value")
-    .then((snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        if (Array.isArray(data.tasks)) {
-          setTasks(data.tasks);
-          uid = Math.max(1, ...data.tasks.map(t => t.id + 1));
+    ref.once("value")
+      .then(snap => {
+        const data = snap.val();
+        if (data) {
+          if (Array.isArray(data.tasks))  { setTasks(data.tasks); uid = Math.max(1, ...data.tasks.map(t=>t.id+1)); }
+          if (Array.isArray(data.people)) setPeople(data.people);
         }
-        if (Array.isArray(data.people)) setPeople(data.people);
-      } else {
-        // Init empty db structure
-        dbRef.set({ tasks: [], people: DEFAULT_PEOPLE });
-      }
-      setSyncState("ok");
-      syncReady.current = true;
-    })
-    .catch(() => {
-      setSyncState("error");
-      syncReady.current = true;
-    });
-  },[]);
+        setSyncState("ok");
+        fbReady.current = true;
+      })
+      .catch(() => setSyncState("error"))
+      .finally(() => { isFirstLoad.current = false; });
+  }, []);
 
-  /* ── Firebase: Save engine ── */
+  /* ── Firebase: debounced save on every state change ── */
   function scheduleSave(latestTasks, latestPeople) {
-    if (typeof firebase === 'undefined' || !syncReady.current) return;
-    
+    if (isFirstLoad.current) return;
     clearTimeout(syncTimer.current);
     setSyncState("syncing");
 
     syncTimer.current = setTimeout(() => {
-      firebase.database().ref("boardData").set({
-        tasks: latestTasks,
-        people: latestPeople
-      })
-      .then(() => setSyncState("ok"))
-      .catch(() => setSyncState("error"));
-    }, 1200); // 1.2 second debounce
+      // Always mirror to localStorage as offline backup
+      try { localStorage.setItem("between_boardData", JSON.stringify({ tasks: latestTasks, people: latestPeople })); } catch {}
+
+      if (!fbReady.current) { setSyncState("ok"); return; }
+
+      db.ref("boardData").set({ tasks: latestTasks, people: latestPeople })
+        .then(() => setSyncState("ok"))
+        .catch(() => setSyncState("error"));
+    }, 800);
   }
 
-  /* ── Track State Mutatations ── */
-  useEffect(() => {
-    scheduleSave(tasks, people);
-  }, [tasks, people]);
+  /* ── Track state mutations ── */
+  useEffect(() => { scheduleSave(tasks, people); }, [tasks, people]);
+
+  /* ── Export snapshot to JSON file ── */
+  function exportJSON() {
+    const blob = new Blob([JSON.stringify({ tasks, people }, null, 2)], { type: "application/json" });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement("a"), { href: url, download: "taskmanager-data.json" });
+    a.click(); URL.revokeObjectURL(url);
+  }
+
+  /* ── Import from a JSON file ── */
+  function importJSON(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (Array.isArray(data.tasks))  { setTasks(data.tasks); uid = Math.max(1, ...data.tasks.map(t=>t.id+1)); }
+        if (Array.isArray(data.people)) setPeople(data.people);
+        setSyncState("ok");
+      } catch { setSyncState("error"); }
+    };
+    reader.readAsText(file);
+  }
 
   /* ── Derived state ── */
   const editTask = tasks.find(t=>t.id===editId)||null;
@@ -696,9 +989,9 @@ function App() {
   const statusTotals = STATUSES.reduce((acc,s)=>{ acc[s]=tasks.filter(t=>t.status===s).length; return acc; },{});
 
   function SyncBadge() {
-    if(syncState==="syncing") return <span className="sync-badge syncing"><span className="spin">↻</span> Syncing…</span>;
-    if(syncState==="ok")      return <span className="sync-badge ok"><Ic.Cloud/> Live</span>;
-    if(syncState==="error")   return <span className="sync-badge error" title="Configuration incomplete" onClick={()=>window.location.reload()}><Ic.Cloud/> Error Connecting</span>;
+    if(syncState==="syncing") return <span className="sync-badge syncing"><span className="spin">↻</span> Saving…</span>;
+    if(syncState==="ok")      return <span className="sync-badge ok"><Ic.Cloud/> Saved</span>;
+    if(syncState==="error")   return <span className="sync-badge error" title="Firebase error — check console"><Ic.Cloud/> Sync error</span>;
     return null;
   }
 
@@ -729,12 +1022,16 @@ function App() {
       {showSettings && (
         <SettingsPanel
           onClose={()=>setShowSettings(false)}
-          onDeleteAllTasks={()=>setTasks([])}
-          onDeleteAllPeople={()=>setPeople([])}
+          tasks={tasks}
+          setTasks={setTasks}
+          people={people}
+          setPeople={setPeople}
           onMoveAllTasks={status=>{
             const now=new Date().toISOString();
             setTasks(p=>p.map(t=>({...t,status,statusChangedAt:t.status!==status?now:t.statusChangedAt})));
           }}
+          onExportJSON={exportJSON}
+          onImportJSON={importJSON}
         />
       )}
 
@@ -782,7 +1079,7 @@ function App() {
       </div>
 
       {/* MODALS */}
-      {showCreate&&<CreateModal people={people} setPeople={setPeople} onClose={()=>setShowCreate(false)} onCreate={t=>setTasks(p=>[...p,t])}/>}
+      {showCreate&&<CreateModal people={people} setPeople={setPeople} onClose={()=>setShowCreate(false)} onCreate={t=>setTasks(p=>[...p,t])} defaultResponsible={filters.persona!=="all"?filters.persona:undefined}/>}
       {editTask&&<EditModal task={editTask} people={people} setPeople={setPeople}
         onClose={()=>setEditId(null)}
         onSave={u=>{setTasks(p=>p.map(t=>t.id===u.id?u:t));setEditId(null);}}
